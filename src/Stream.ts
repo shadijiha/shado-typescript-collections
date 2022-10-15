@@ -27,9 +27,11 @@ export interface Stream<E> {
 
 	map<R>(func: (e: E) => R): Stream<R>;
 
-	max(comparator: (a: E, b: E) => number): E | null;
-	min(comparator: (a: E, b: E) => number): E | null;
+	max(mapper: (a: E) => number): E;
+	min(mapper: (a: E) => number): E;
 	reduce(identity: E, accumulator: (acc: E, num: E) => E): E;
+	mean(mapper: (a: E) => number): number;
+	median(mapper: (a: E) => number): E | number;
 
 	sorted(func: (a: E, b: E) => number): Stream<E>;
 }
@@ -160,28 +162,29 @@ export class StreamImplt<E> implements Stream<E> {
 		return new StreamImplt<R>(newData);
 	}
 
-	max(comparator: (a: E, b: E) => number): E | null {
+	/**
+	 *
+	 * @param comparator Takes an object/any and should return a comparable (number, boolean, etc)
+	 * @returns
+	 */
+	max(mapper: (a: E) => number): E {
 		const newData = this.execute();
-
-		let toReturn: E | null = null;
-		for (const e of newData) {
-			if (comparator(<E>toReturn, e) < 0) {
-				toReturn = e;
-			}
-		}
-		return toReturn;
+		return newData.reduce((prev, curr) => {
+			return mapper(prev) > mapper(curr) ? prev : curr;
+		});
 	}
 
-	min(comparator: (a: E, b: E) => number): E | null {
+	/**
+	 *
+	 * @param comparator Takes an object/any and should return a comparable (number, boolean, etc)
+	 * @returns
+	 */
+	min(mapper: (a: E) => number): E {
 		const newData = this.execute();
 
-		let toReturn: E | null = null;
-		for (const e of newData) {
-			if (comparator(<E>toReturn, e) > 0) {
-				toReturn = e;
-			}
-		}
-		return toReturn;
+		return newData.reduce((prev, curr) => {
+			return mapper(prev) < mapper(curr) ? prev : curr;
+		});
 	}
 
 	reduce(identity: E, accumulator: (acc: E, num: E) => E): E {
@@ -192,6 +195,33 @@ export class StreamImplt<E> implements Stream<E> {
 			toReturn = accumulator(toReturn, e);
 		}
 		return toReturn;
+	}
+
+	mean(mapper: (a: E) => number): number {
+		const newData = this.execute();
+		let total = 0;
+		let count = 0;
+
+		newData.forEach((item, index) => {
+			total += mapper(item);
+			count++;
+		});
+
+		return total / count;
+	}
+
+	median(mapper: (a: E) => number): E | number {
+		const newData = this.execute();
+		newData.sort();
+
+		newData.sort((a, b) => {
+			return mapper(a) - mapper(b);
+		});
+
+		const half = Math.floor(newData.length / 2);
+		if (newData.length % 2) return newData[half];
+
+		return (mapper(newData[half - 1]) + mapper(newData[half])) / 2.0;
 	}
 
 	sorted(func: (a: E, b: E) => number): Stream<E> {

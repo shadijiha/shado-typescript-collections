@@ -1,18 +1,21 @@
 {
     "name": "shado-typescript-collections",
-    "version": "0.1.2",
+    "version": "1.1.2",
     "description": "Java-like collections API for typescript",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "prepublish": "tsc",
     "scripts": {
         "tsc": "tsc",
-        "dev": "node dist/test.js"
+        "watch": "tsc -w",
+        "start": "node dist/test.js",
+        "dev": "nodemon dist/test.js"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "nodemon": "^2.0.20",
         "typescript": "^4.8.4"
     }
 }
